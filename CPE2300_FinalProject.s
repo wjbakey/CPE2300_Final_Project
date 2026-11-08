@@ -64,6 +64,70 @@ clear_grid_return:
 	ret
 initialize_exit:
 
+# Counts Neighbors and returns # in a0 (Cells above, below, left, right, and diaganol)
+# count_neighbors(a0 = row, a1 = col)
+count_neighbors:
+	li t0, 0 # count of neighbors
+	
+	# initial neighbor row
+	li t1, -1 # row
+	
+	row_loop:
+	li t2, 1
+	bgt t1, t2, count_neighbor_exit # if row <= 1, enter loop
+	
+	# initial neighbor col
+	li t2, -1 # col
+	
+	col_loop:
+	li t3, 1
+	bgt t2, t3, row_loop_end # if col > 1, skip
+	
+	# (row == 0 && col == 0)
+	# skip this loop iteration if we are looking at the center cell
+	# (It shouldn't count itself as a neighbor) 
+	bnez t1, col_loop_skip
+	beqz t2, col_loop_end
+	
+	col_loop_skip:
+	mv t3, a0 # grabs cell row
+	add t3, t3, t1 # neighbor cell row
+	mv t4, a1 # grabs cell col
+	add t4, t4, t2 # neighbor cell col
+	
+	# continues loop if outside row domain (edge case)
+	li t5, ROWS
+	bltz t3, row_loop_end # row < 0 (negative), then skip
+	bge t3, t5, row_loop_end # row >= total rows, then skip
+	
+	# continues loop if outside col range (edge case)
+	li t5, COLS
+	bltz t4, col_loop_end # col < 0 Inegative), then skip
+	bge t4, t5, col_loop_end # col >= total cols, then skip
+	
+	# index = neighbor row * COLS + neighbor col
+	li t6, COLS
+	mv t5, t3 # index = neighbor row
+	mul t5, t5, t6 # index * COLS
+	add t5, t5, t4 # index + neighbor col
+	
+	# count += currentGrid[index]
+	lw t6, currentGrid
+	add t5, t5, t6 # address of cell
+	lb t6, 0(t5) # state of currentCell
+	add t0, t0, t6 # add to count
+	
+	col_loop_end:
+	addi t2, t2, 1 # neighbor col + 1
+	j col_loop
+	
+	row_loop_end:
+	addi t1, t1, 1 # neighor row + 1
+	j row_loop
+	
+	count_neighbor_exit:
+	mv a0, t0
+	ret
 exit:
     # Exit the program safely
     li   a7, 10                           # exit
