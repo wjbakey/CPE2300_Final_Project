@@ -22,7 +22,30 @@ nextGrid: .word gridB     # pointer for gridB
 .globl main
 main:
 
+## Sets up the grid to a predefined set of alive cells
+initialize_grid:	# a0 = value to clear to, a1 = grid address, a2 = end of grid address
+	li a0, 0	# A zero to load into each cell
+	lw a1, currentGrid	# Pointer for gridA (used as loop index)
+	li t0, TOTALCELLS	# size of gridA
+	add a2, a1, t0	# Pointer for end of gridA
+	call clear_grid
+	lw a1, nextGrid	# Pointer for gridB (loop index)
+	add a2, a1, t0	# gridB space
+	call clear_grid
+	
+	j initialize_exit
 
+## Clears the whole grid to 0's ("Dead" cells)
+clear_grid:
+	bge a1, a2, clear_grid_return
+	sb a0, 0(a1)	# Clear the cell to 0
+	addi a1, a1, 1	# Next cell
+	j clear_grid
+clear_grid_return:
+	ret
+initialize_exit:
+
+exit:
     # Exit the program safely
     li   a7, 10                           # exit
     ecall
