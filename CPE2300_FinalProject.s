@@ -64,7 +64,7 @@ clear_grid_return:
 	ret
 initialize_exit:
 
-# Counts Neighbors and returns # in a0 (Cells above, below, left, right, and diaganol)
+# Counts Neighbors and returns # in a0 (Cells above, below, left, right, and diagonal)
 # count_neighbors(a0 = row, a1 = col)
 count_neighbors:
 	li t0, 0 # count of neighbors
@@ -102,7 +102,7 @@ count_neighbors:
 	
 	# continues loop if outside col range (edge case)
 	li t5, COLS
-	bltz t4, col_loop_end # col < 0 Inegative), then skip
+	bltz t4, col_loop_end # col < 0 (negative), then skip
 	bge t4, t5, col_loop_end # col >= total cols, then skip
 	
 	# index = neighbor row * COLS + neighbor col
