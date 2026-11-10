@@ -159,7 +159,7 @@ inner_loop:
 	lb t3, 0(t3)
 	li t4, 0
 
-	# Applying the rules
+	# If / Else statements depedent on cell state
 	li t5, 1
 	bne t3, t5, else
 
@@ -190,6 +190,13 @@ outer_next:
 
 complete:
 	ret
+
+swap_buffers:
+	lw t0, currentGrid # temp -> current Grid
+	lw t1, nextGrid 
+
+	sw t1, currentGrid # current Grid -> nextGrid
+	sw t0, nextGrid # next Grid -> temp
 
 exit:
     # Exit the program safely
