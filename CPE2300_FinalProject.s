@@ -128,6 +128,69 @@ count_neighbors:
 	count_neighbor_exit:
 	mv a0, t0
 	ret
+
+update_generation:
+	li s0, 0 # Rows
+
+outer_loop:
+	li t0, ROWS
+	bge s0, t0, complete
+
+	li s1, 0 # Columns
+
+inner_loop:
+	
+	li t0, COLS
+	bge s1, t0, outer_next
+
+	# Counting neighbors 
+	mv a0, s0
+	mv a1, s1
+	call count_neighbors
+
+	# Calculating the index (t1)
+	li t0, COLS
+	mul t1, s0, t0
+	add t1, t1, s1
+
+	# Determining the cell state
+	lw t2, currentGrid
+	add t3, t2, t1
+	lb t3, 0(t3)
+	li t4, 0
+
+	# Applying the rules
+	li t5, 1
+	bne t3, t5, else
+
+	li t5, 2
+	beq a0, t5, alive
+
+	li t5, 3 
+	beq a0, t5, alive
+
+else:
+	li t5, 3
+	bne a0, t5, next_state
+
+alive:
+	li t4, 1
+
+next_state:
+	lw t5, nextGrid
+	add t6, t5, t1
+	sb t4, 0(t6)
+
+	addi s1, s1, 1 #Increase count for columns
+	j inner_loop # Move back to inner loop
+
+outer_next:
+	addi s0, s0, 1
+	j outer_loop # Move back to outer loop
+
+complete:
+	ret
+
 exit:
     # Exit the program safely
     li   a7, 10                           # exit
