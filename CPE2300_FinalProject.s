@@ -27,9 +27,9 @@ nextGrid: .word gridB     # pointer for gridB
 main:
 #Set up palette
 	li   t0, PAL
-	li   t1, 0xFFDC00      # palette[1] = yellow
+	li   t1, 0x000000      # palette[1] = black
 	sw   t1, 4(t0)
-	li   t1, 0x000000      # palette[2] = black
+	li   t1, 0xFFDC00      # palette[2] = yellow
 	sw   t1, 8(t0)
 	li   t1, 0xAAAAAA      # palette[3] = gray
 	sw   t1, 12(t0)
@@ -208,12 +208,7 @@ swap_buffers:
 	sw t1, currentGrid # current Grid -> nextGrid
 	sw t0, nextGrid # next Grid -> temp
 
-exit:
-    # Exit the program safely
-    li   a7, 10                           # exit
-    ecall
-    
-# Lights and individual pixel on the VGA
+# Colors an individual pixel on the VGA
 draw_pixel:	#a0=x(COL), a1=y(ROW), a2=palette_index
 	# Calculate the pixel index (i = y*W+x)
 	li t0, W # Screen width
@@ -225,4 +220,68 @@ draw_pixel:	#a0=x(COL), a1=y(ROW), a2=palette_index
 	sb a2, 0(t2)	#store palette index at cell index
 	ret
 
+# Colors an entire cell on the VGA
+draw_cell: #a0=cell col, a1=cell row, a2=state (dead/alive)
+	#Store saved registers/return address
+	addi sp, sp, -32
+	sw ra, 0(sp) #return address
+	sw s0, 4(sp) #cell size
+	sw s1, 8(sp) #cell color
+	sw s2, 12(sp)#row counter
+	sw s3, 16(sp)#col counter
+	sw s4, 20(sp)#starting col coord
+	sw s5, 24(sp)#starting row coord
+
+	# Convert grid coords to pixel coords
+	li s0, CELL_SIZE
+	mul s4, a0, s0	#starting col (pixel coords)
+	mul s5, a1, s0	#starting row (pixel coords)
+	# Choose color based on state
+	li s1, DEAD_COLOR
+	li t0, 1
+	bne a2, t0, alive_color_skip #If cell is alive, change to alive color
+	li s1, ALIVE_COLOR
+	alive_color_skip:
+	# Drawing cell (nested for loop)
+	li s2, 0 #current row
+draw_cell_outer:
+	bge s2, s0, draw_cell_return #If pixel outside of cell, next row
+	li s3, 0 #current col
+draw_cell_inner:
+	mv t4, s1 #Temp drawing color
+	bge s3, s0, draw_cell_indexing #If pixel outside of cell, next col
+	beqz s2, color_grid_line # if pixel is row 0, gridline
+	beqz s3, color_grid_line # if pixel is col 0, gridline
+	j grid_line_skip
+	color_grid_line:
+	li t4, LINE_COLOR
+	grid_line_skip:
+	#Prepare arguments
+	add a0, s3, s4 #COL
+	add a1, s5, s2 #ROW
+	mv a2, t4 #PALETTE
+	# Draw the pixel
+	call draw_pixel
+	#Index the column
+	addi s3, s3, 1 #next col
+	j draw_cell_inner
+draw_cell_indexing:
+	addi s2, s2, 1 #next row
+	j draw_cell_outer
+draw_cell_return:
+	#Restore saved registers/ra
+	lw ra, 0(sp)
+	lw s0, 4(sp)
+	lw s1, 8(sp)
+	lw s2, 12(sp)
+	lw s3, 16(sp)
+	lw s4, 20(sp)
+	lw s5, 24(sp)
+	addi sp, sp, 32
+	ret
 	
+exit:
+    # Exit the program safely
+    li   a7, 10                           # exit
+    ecall
+    
