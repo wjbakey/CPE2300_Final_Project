@@ -6,9 +6,9 @@
 .equ FB,      0x20000000 #frame buffer
 .equ PAL,     0x21000000 #palette
 .equ PRESENT, 0x21001008 #present
-.equ DEAD_COLOR, 0	#Dead palette index
-.equ ALIVE_COLOR, 3	#Alive palette index
-.equ LINE_COLOR, 9	#Grid line palette index
+.equ DEAD_COLOR, 1	#Dead palette index
+.equ ALIVE_COLOR, 2	#Alive palette index
+.equ LINE_COLOR, 3	#Grid line palette index
 # -- Grid/Cell Info (16x12 cell grid)
 .equ W,       192	# width of screen
 .equ L,       144       # length of screen
@@ -25,7 +25,14 @@ nextGrid: .word gridB     # pointer for gridB
 .text
 .globl main
 main:
-
+#Set up palette
+	li   t0, PAL
+	li   t1, 0xFFDC00      # palette[1] = yellow
+	sw   t1, 4(t0)
+	li   t1, 0x000000      # palette[2] = black
+	sw   t1, 8(t0)
+	li   t1, 0xAAAAAA      # palette[3] = gray
+	sw   t1, 12(t0)
 # Sets up the grid to a predefined set of alive cells
 initialize_grid:	# a0 = value to clear to, a1 = grid address, a2 = end of grid address
 # Clear both grids
@@ -205,3 +212,17 @@ exit:
     # Exit the program safely
     li   a7, 10                           # exit
     ecall
+    
+# Lights and individual pixel on the VGA
+draw_pixel:	#a0=x(COL), a1=y(ROW), a2=palette_index
+	# Calculate the pixel index (i = y*W+x)
+	li t0, W # Screen width
+	mul t1, a1, t0	# y*W
+	add t1, t1, a0	# +x
+	# Load color to framebuffer
+	li t2, FB	#framebuffer
+	add t2, t2, t1	#add index to framebuffer
+	sb a2, 0(t2)	#store palette index at cell index
+	ret
+
+	
