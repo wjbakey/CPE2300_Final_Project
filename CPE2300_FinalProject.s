@@ -3,16 +3,19 @@
 
 .data
 # -- VGA Display
-.equ FB,      0x20000000
-.equ PAL,     0x21000000
-.equ PRESENT, 0x21001008
+.equ FB,      0x20000000 #frame buffer
+.equ PAL,     0x21000000 #palette
+.equ PRESENT, 0x21001008 #present
+.equ DEAD_COLOR, 0	#Dead palette index
+.equ ALIVE_COLOR, 3	#Alive palette index
+.equ LINE_COLOR, 9	#Grid line palette index
 # -- Grid/Cell Info (16x12 cell grid)
 .equ W,       192	# width of screen
 .equ L,       144       # length of screen
 .equ COLS,   16		# # of colums
 .equ ROWS,   12        # # of rows
+.equ CELL_SIZE 12	# width of each cell in pixels
 .equ TOTALCELLS, 192    # rows*cols
-
 # 2 Separate Grids for Double Buffering
 gridA: .space TOTALCELLS
 gridB: .space TOTALCELLS
