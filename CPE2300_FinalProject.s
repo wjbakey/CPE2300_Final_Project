@@ -83,14 +83,14 @@ count_neighbors:
 	li t1, -1 # row
 	
 	row_loop:
-	li t2, 1
+	li t2, 1 # upper row limit
 	bgt t1, t2, count_neighbor_exit # if row > 1, exit loop
 	
 	# initial neighbor col
 	li t2, -1 # col
 	
 	col_loop:
-	li t3, 1
+	li t3, 1 # upper col limit
 	bgt t2, t3, row_loop_end # if col > 1, skip
 	
 	# (row == 0 && col == 0)
@@ -280,7 +280,7 @@ draw_cell_return:
 	addi sp, sp, 32
 	ret
 	
-#draws the entire grid on the VGA
+# draws the entire grid on the VGA
 draw_grid:
 	# stores saved registers/address
 	addi sp, sp, -32
@@ -341,7 +341,13 @@ draw_grid:
 	addi sp, sp, 32
 	
 	ret
-	
+
+# presents the drawn grid for the frame on the VGA
+present_frame:
+	li t0, PRESENT # present address
+	li t1, 1 # present flag
+	sw t1, 0(t0)
+	ret
 	
 	
 exit:
