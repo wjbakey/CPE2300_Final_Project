@@ -84,7 +84,7 @@ count_neighbors:
 	
 	row_loop:
 	li t2, 1
-	bgt t1, t2, count_neighbor_exit # if row <= 1, enter loop
+	bgt t1, t2, count_neighbor_exit # if row > 1, exit loop
 	
 	# initial neighbor col
 	li t2, -1 # col
@@ -279,6 +279,70 @@ draw_cell_return:
 	lw s5, 24(sp)
 	addi sp, sp, 32
 	ret
+	
+#draws the entire grid on the VGA
+draw_grid:
+	# stores saved registers/address
+	addi sp, sp, -32
+	sw ra, 0(sp) # return address
+	sw s0, 4(sp) # number of rows
+	sw s1, 8(sp) # number of cols
+	sw s2, 12(sp) # row counter
+	sw s3, 16(sp) # col counter
+	sw s4, 20(sp) # index
+	sw s5, 24(sp) # currentGrid
+	
+	li s0, ROWS # number of rows
+	li s1, COLS # number of cols
+	li s2, 0 # row counter
+	
+	draw_grid_row_loop:
+	li s3, 0 # col counter
+	bge s2, s0, draw_grid_exit # if row >= ROWS exit loop
+	
+	draw_grid_col_loop:
+	bge s3, s1, draw_grid_row_exit # if col >= COLS exit loop
+	
+	# index = COLS * row + col
+	mv s4, s1
+	mul s4, s4, s2
+	add s4, s4, s3
+	
+	# state = currentGrid[index]
+	lw s5, currentGrid
+	add s4, s4, s5 # address of cell
+	lb s5, 0(s4) # cell state
+	
+	# draw_cell parameters
+	mv a0, s3 # cell col
+	mv a1, s2 # cell row
+	mv a2, s5 # state
+	
+	call draw_cell
+	
+	draw_grid_col_exit: # + 1 col count --> loop
+	addi s3, s3, 1
+	j draw_grid_col_loop
+	
+	draw_grid_row_exit: # + 1 row count --> loop
+	addi s2, s2, 1
+	j draw_grid_row_loop
+	
+	draw_grid_exit:
+	
+	# restore saved registers/address
+	lw ra, 0(sp)
+	lw s0, 4(sp)
+	lw s1, 8(sp)
+	lw s2, 12(sp)
+	lw s3, 16(sp)
+	lw s4, 20(sp)
+	lw s5, 24(sp)
+	addi sp, sp, 32
+	
+	ret
+	
+	
 	
 exit:
     # Exit the program safely
