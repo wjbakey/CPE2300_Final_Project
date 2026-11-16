@@ -139,28 +139,31 @@ count_neighbors:
 	mv a0, t0
 	ret
 
+
+# Calculates the next generation and stores it in nextGrid
 update_generation:
+	# Save return address before calling another function
 	addi sp, sp, -4
 	sw ra, 0(sp)
 	li s0, 0 # Rows
 
 outer_loop:
 	li t0, ROWS
-	bge s0, t0, complete
+	bge s0, t0, complete # If all rows are done, finish update
 
 	li s1, 0 # Columns
 
 inner_loop:
 	
 	li t0, COLS
-	bge s1, t0, outer_next
+	bge s1, t0, outer_next # If row done, go to next row
 
-	# Counting neighbors 
+	# Counting neighbors around current cell
 	mv a0, s0
 	mv a1, s1
 	call count_neighbors
 
-	# Calculating the index: row * COLS + col
+	# Calculating grid index: row * COLS + col
 	li t0, COLS
 	mul t1, s0, t0
 	add t1, t1, s1
@@ -173,11 +176,11 @@ inner_loop:
 	# Default next state is dead
 	li t4, 0
 
-	# If current cell is alive
+	# Check if current cell is alive
 	li t5, 1
 	bne t3, t5, else
 
-	# Alive survives with 2 or 3 neighbors
+	# Alive cells survives with 2 or 3 neighbors
 	li t5, 2
 	beq a0, t5, alive
 
@@ -185,36 +188,39 @@ inner_loop:
 	beq a0, t5, alive
 
 else:
+	# Dead cells can become alive with 3 neighbors
 	li t5, 3
 	bne a0, t5, next_state
 
 alive:
-	li t4, 1
+	li t4, 1 # Set next state to alive
 
 next_state:
-	# nextGrid [index] = t4
+	# Store next cell state into next grid
 	lw t5, nextGrid
 	add t6, t5, t1
 	sb t4, 0(t6)
 
 	addi s1, s1, 1 #Increase count for columns
-	j inner_loop # Move back to inner loop
+	j inner_loop # Move to next column
 
 outer_next:
-	addi s0, s0, 1
-	j outer_loop # Move back to outer loop
+	addi s0, s0, 1 # Increase row count
+	j outer_loop # Move to next row
 
 complete:
+	# Restore the return address and return
 	lw ra, 0(sp)
 	addi sp, sp, 4
 	ret
 
+# Swaps current grid with newly calculated grid
 swap_buffers:
-	lw t0, currentGrid # temp -> current Grid
-	lw t1, nextGrid 
+	lw t0, currentGrid # Save old current grid
+	lw t1, nextGrid # Save new grid
 
-	sw t1, currentGrid # current Grid -> nextGrid
-	sw t0, nextGrid # next Grid -> temp
+	sw t1, currentGrid # New grid becomes current grid
+	sw t0, nextGrid # Old grid becomes new grid
 	ret
 
 # Colors an individual pixel on the VGA
