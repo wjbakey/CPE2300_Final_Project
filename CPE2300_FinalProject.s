@@ -140,6 +140,8 @@ count_neighbors:
 	ret
 
 update_generation:
+	addi sp, sp, -4
+	sw ra, 0(sp)
 	li s0, 0 # Rows
 
 outer_loop:
@@ -158,21 +160,24 @@ inner_loop:
 	mv a1, s1
 	call count_neighbors
 
-	# Calculating the index (t1)
+	# Calculating the index: row * COLS + col
 	li t0, COLS
 	mul t1, s0, t0
 	add t1, t1, s1
 
-	# Determining the cell state
+	# Get current cell state
 	lw t2, currentGrid
 	add t3, t2, t1
 	lb t3, 0(t3)
+
+	# Default next state is dead
 	li t4, 0
 
-	# If / Else statements depedent on cell state
+	# If current cell is alive
 	li t5, 1
 	bne t3, t5, else
 
+	# Alive survives with 2 or 3 neighbors
 	li t5, 2
 	beq a0, t5, alive
 
@@ -187,6 +192,7 @@ alive:
 	li t4, 1
 
 next_state:
+	# nextGrid [index] = t4
 	lw t5, nextGrid
 	add t6, t5, t1
 	sb t4, 0(t6)
@@ -199,6 +205,8 @@ outer_next:
 	j outer_loop # Move back to outer loop
 
 complete:
+	lw ra, 0(sp)
+	addi sp, sp, 4
 	ret
 
 swap_buffers:
@@ -207,6 +215,7 @@ swap_buffers:
 
 	sw t1, currentGrid # current Grid -> nextGrid
 	sw t0, nextGrid # next Grid -> temp
+	ret
 
 # Colors an individual pixel on the VGA
 draw_pixel:	#a0=x(COL), a1=y(ROW), a2=palette_index
