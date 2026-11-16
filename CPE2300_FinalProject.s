@@ -223,6 +223,18 @@ swap_buffers:
 	sw t0, nextGrid # Old grid becomes new grid
 	ret
 
+# Updates the grid by one generation
+step_generation:
+	addi sp, sp, -4
+	sw ra, 0(sp)
+
+	call update_generation # Call the update generation function
+	call swap_buffers # Call the swap buffers function
+
+	lw ra, 0(sp)
+	addi sp, sp, 4
+	ret
+
 # Colors an individual pixel on the VGA
 draw_pixel:	#a0=x(COL), a1=y(ROW), a2=palette_index
 	# Calculate the pixel index (i = y*W+x)
