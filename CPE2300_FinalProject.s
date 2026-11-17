@@ -14,7 +14,7 @@
 .equ L,       144       # length of screen
 .equ COLS,   16		# # of colums
 .equ ROWS,   12        # # of rows
-.equ CELL_SIZE 12	# width of each cell in pixels
+.equ CELL_SIZE, 12	# width of each cell in pixels
 .equ TOTALCELLS, 192    # rows*cols
 # 2 Separate Grids for Double Buffering
 gridA: .space TOTALCELLS
