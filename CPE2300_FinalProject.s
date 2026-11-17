@@ -1,4 +1,4 @@
-# Conway's Game of Life in Assembly
+.equ H, 144\n# Conway's Game of Life in Assembly
 # by Will Bakey, Daiki Hew, and Logan Chook
 
 .data
@@ -10,7 +10,7 @@
 .equ ALIVE_COLOR, 2	#Alive palette index
 .equ LINE_COLOR, 3	#Grid line palette index
 # -- Grid/Cell Info (16x12 cell grid)
-.equ W,       192	# width of screen
+.equ W,       192
 .equ L,       144       # length of screen
 .equ COLS,   16		# # of colums
 .equ ROWS,   12        # # of rows
@@ -48,24 +48,31 @@ main:
 
 # Sets up the grid to a predefined set of alive cells
 initialize_grid:	# a0 = value to clear to, a1 = grid address, a2 = end of grid address
+	addi sp, sp, -16
+	sw ra, 0(sp)
 # Clear both grids
 	li a0, 0	# A zero to load into each cell
-	lw a1, currentGrid	# Pointer for gridA (used as loop index)
+	la a1, currentGrid	# Pointer for gridA (used as loop index)
+	lw a1, 0(a1)
 	li t0, TOTALCELLS	# size of gridA
 	add a2, a1, t0	# Pointer for end of gridA
 	call clear_grid
-	lw a1, nextGrid	# Pointer for gridB (loop index)
+	la a1, nextGrid	# Pointer for gridB (loop index)
+	lw a1, 0(a1)
 	add a2, a1, t0	# gridB space
 	call clear_grid
-	lw a0, currentGrid	# Pointer for current grid
+	la a0, currentGrid	# Pointer for current grid
+	lw a0, 0(a0)
 	li a1, 4		# Target column
 	li a2, 5		# Target row
 	li a3, 1		# Load cell with 1 (alive)
 	call load_cell
-	lw a0, currentGrid	# Pointer for current grid
+	la a0, currentGrid	# Pointer for current grid
+	lw a0, 0(a0)
 	li a2, 6		# Target row
 	call load_cell
-	lw a0, currentGrid	# Pointer for current grid
+	la a0, currentGrid	# Pointer for current grid
+	lw a0, 0(a0)
 	li a2, 7		# Target row
 	call load_cell
 	j initialize_exit
@@ -86,7 +93,9 @@ clear_grid:
 clear_grid_return:
 	ret
 initialize_exit:
-
+	lw ra, 0(sp)
+	addi sp, sp, 16
+	ret
 # Counts Neighbors and returns # in a0 (Cells above, below, left, right, and diagonal)
 # count_neighbors(a0 = row, a1 = col)
 count_neighbors:
@@ -135,7 +144,8 @@ count_neighbors:
 	add t5, t5, t4 # index + neighbor col
 	
 	# count += currentGrid[index]
-	lw t6, currentGrid
+	la t6, currentGrid
+	lw t6, 0(t6)
 	add t5, t5, t6 # address of cell
 	lb t6, 0(t5) # state of currentCell
 	add t0, t0, t6 # add to count
@@ -182,7 +192,8 @@ inner_loop:
 	add t1, t1, s1
 
 	# Get current cell state
-	lw t2, currentGrid
+	la t2, currentGrid
+	lw t2, 0(t2)
 	add t3, t2, t1
 	lb t3, 0(t3)
 
@@ -210,7 +221,8 @@ alive:
 
 next_state:
 	# Store next cell state into next grid
-	lw t5, nextGrid
+	la t5, nextGrid
+	lw t5, 0(t5)
 	add t6, t5, t1
 	sb t4, 0(t6)
 
@@ -229,11 +241,13 @@ complete:
 
 # Swaps current grid with newly calculated grid
 swap_buffers:
-	lw t0, currentGrid # Save old current grid
-	lw t1, nextGrid # Save new grid
+	la t0, currentGrid # Save old current grid
+	lw t0, 0(t0)
+	la t1, nextGrid # Save new grid
+	lw t1, 0(t1)
 
-	sw t1, currentGrid # New grid becomes current grid
-	sw t0, nextGrid # Old grid becomes new grid
+	sw t1, 0(t0) # New grid becomes current grid
+	sw t0, 0(t1) # Old grid becomes new grid
 	ret
 
 # Updates the grid by one generation
@@ -349,7 +363,8 @@ draw_grid:
 	add s4, s4, s3
 	
 	# state = currentGrid[index]
-	lw s5, currentGrid
+	la s5, currentGrid
+	lw s5, 0(s5)
 	add s4, s4, s5 # address of cell
 	lb s5, 0(s4) # cell state
 	
@@ -405,7 +420,7 @@ step_and_draw:
 	ret
 
 exit:
-    # Exit the program safely
-    li   a7, 10                           # exit
-    ecall
+# Exit the program safely
+	li   a7, 10                           # exit
+	ecall
     
