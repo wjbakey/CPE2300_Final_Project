@@ -33,6 +33,19 @@ main:
 	sw   t1, 8(t0)
 	li   t1, 0xAAAAAA      # palette[3] = gray
 	sw   t1, 12(t0)
+
+	# Load initial pattern
+	call initialize_grid
+
+	# Draw initial generation
+	call draw_grid
+	call present_frame
+
+	# Calculate, swap, draw, and show one generation
+	call step_and_draw
+
+	j exit
+
 # Sets up the grid to a predefined set of alive cells
 initialize_grid:	# a0 = value to clear to, a1 = grid address, a2 = end of grid address
 # Clear both grids
@@ -376,7 +389,21 @@ present_frame:
 	sw t1, 0(t0)
 	ret
 	
+# Calculates, swaps, draws, and displays one new generation
+step_and_draw:
+
+	addi sp, sp, -4
+	sw ra, 0(sp)
+
+	call update_generation # Calculate the next generation
+	call swap_buffers # Make the new generation current
+	call draw_grid # Draw the updated grid
+	call present_frame # Display the updated frame buffer
 	
+	lw ra, 0(sp)
+	addi sp, sp, 4
+	ret
+
 exit:
     # Exit the program safely
     li   a7, 10                           # exit
