@@ -1,4 +1,4 @@
-.equ H, 144\n# Conway's Game of Life in Assembly
+# Conway's Game of Life in Assembly
 # by Will Bakey, Daiki Hew, and Logan Chook
 
 .data
@@ -299,11 +299,11 @@ draw_cell: #a0=cell col, a1=cell row, a2=state (dead/alive)
 	# Drawing cell (nested for loop)
 	li s2, 0 #current row
 draw_cell_outer:
-	bge s2, s0, draw_cell_return #If pixel outside of cell, next row
+	bge s2, s0, draw_cell_return #If pixel outside of cell, exit function
 	li s3, 0 #current col
 draw_cell_inner:
 	mv t4, s1 #Temp drawing color
-	bge s3, s0, draw_cell_indexing #If pixel outside of cell, next col
+	bge s3, s0, draw_cell_indexing #If pixel outside of cell, next row
 	beqz s2, color_grid_line # if pixel is row 0, gridline
 	beqz s3, color_grid_line # if pixel is col 0, gridline
 	j grid_line_skip
