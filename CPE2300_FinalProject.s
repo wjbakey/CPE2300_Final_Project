@@ -17,14 +17,22 @@
 .equ CELL_SIZE, 12	# width of each cell in pixels
 .equ TOTALCELLS, 192    # rows*cols
 # 2 Separate Grids for Double Buffering
-gridA: .space TOTALCELLS
-gridB: .space TOTALCELLS
-currentGrid: .word gridA  # pointer for gridA
-nextGrid: .word gridB     # pointer for gridB
+gridA: .space 192
+gridB: .space 192
+currentGrid: .word 0  # pointer for gridA
+nextGrid: .word 0     # pointer for gridB
 
 .text
 .globl main
 main:
+#Initialize the grids
+la t0, gridA
+la t1, currentGrid
+sw t0, 0(t1)
+la t0, gridB
+la t1, nextGrid
+sw t0, 0(t1)
+
 #Set up palette
 	li   t0, PAL
 	li   t1, 0x000000      # palette[1] = black
@@ -43,7 +51,8 @@ main:
 
 	# Calculate, swap, draw, and show one generation
 	call step_and_draw
-
+    call step_and_draw
+    
 	j exit
 
 # Sets up the grid to a predefined set of alive cells
@@ -166,15 +175,17 @@ count_neighbors:
 # Calculates the next generation and stores it in nextGrid
 update_generation:
 	# Save return address before calling another function
-	addi sp, sp, -4
+	addi sp, sp, -16
 	sw ra, 0(sp)
-	li s0, 0 # Rows
+	sw s0, 4(sp)
+	sw s1, 8(sp)
+	li s0, 0 # Row
 
 outer_loop:
 	li t0, ROWS
 	bge s0, t0, complete # If all rows are done, finish update
 
-	li s1, 0 # Columns
+	li s1, 0 # Column
 
 inner_loop:
 	
@@ -236,18 +247,20 @@ outer_next:
 complete:
 	# Restore the return address and return
 	lw ra, 0(sp)
-	addi sp, sp, 4
+	lw s0, 4(sp)
+	lw s1, 8(sp)
+	addi sp, sp, 16
 	ret
 
 # Swaps current grid with newly calculated grid
 swap_buffers:
-	la t0, currentGrid # Save old current grid
-	lw t0, 0(t0)
-	la t1, nextGrid # Save new grid
-	lw t1, 0(t1)
+	la t0, currentGrid # Address of currentGrid
+	lw t1, 0(t0)      #Address of gridA
+	la t2, nextGrid #Address of nextGrid
+	lw t3, 0(t2)    #Address of gridB
 
-	sw t1, 0(t0) # New grid becomes current grid
-	sw t0, 0(t1) # Old grid becomes new grid
+	sw t3, 0(t0) # New grid becomes current grid
+	sw t1, 0(t2) # Old grid becomes new grid
 	ret
 
 # Updates the grid by one generation
@@ -407,7 +420,7 @@ present_frame:
 # Calculates, swaps, draws, and displays one new generation
 step_and_draw:
 
-	addi sp, sp, -4
+	addi sp, sp, -16
 	sw ra, 0(sp)
 
 	call update_generation # Calculate the next generation
@@ -416,7 +429,7 @@ step_and_draw:
 	call present_frame # Display the updated frame buffer
 	
 	lw ra, 0(sp)
-	addi sp, sp, 4
+	addi sp, sp, 16
 	ret
 
 exit:
