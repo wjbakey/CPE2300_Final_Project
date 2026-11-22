@@ -47,16 +47,53 @@ main:
 	# Load initial pattern
 	call initialize_grid
 
-	# Draw initial generation
-	call draw_grid
-	call present_frame
-
-	# Calculate, swap, draw, and show one generation
-	call step_and_draw
-	call step_and_draw
-    
+	# Continuously check for keypress, branch based on key
+	main_loop:
+	call read_key
+	#Check for 'n'
+	li t0, 110	#ASCII 'n'
+	bne a0, t0, next_gen_skip #If not 'n' being pressed, skip stepping to the next gen
+	call step_and_draw	#Step to next gen
+	j main_loop
+	next_gen_skip:
+	
+	# Check for '1'
+	li t0, 49	#ASCII '1'
+	bne a0, t0, pattern_one_skip #If not '1' being pressed, skip pattern 1
+	li a0, 1	# Pattern num
+	call load_pattern	# Load pattern
+	call draw_grid		# Draw pattern
+	call present_frame	# Update VGA
+	j main_loop
+	pattern_one_skip:
+	
+	# Check for '2'
+	li t0, 50	#ASCII '2'
+	bne a0, t0, pattern_two_skip #If not '2' being pressed, skip pattern 2
+	li a0, 2	# Pattern num
+	call load_pattern	# Load pattern
+	call draw_grid		# Draw pattern
+	call present_frame	# Update VGA
+	j main_loop
+	pattern_two_skip:
+	
+	# Check for '3'
+	li t0, 51	#ASCII '3'
+	bne a0, t0, pattern_three_skip #If not '3' being pressed, skip pattern 3
+	li a0, 3	# Pattern num
+	call load_pattern	# Load pattern
+	call draw_grid		# Draw pattern
+	call present_frame	# Update VGA
+	j main_loop
+	pattern_three_skip:
+	
+	# Check for 'q'
+	li t0, 113	#ASCII 'q'
+	bne a0, t0, end_program_skip #If not 'q' being pressed, don't exit program
 	j exit
-
+	end_program_skip:
+	j main_loop
+	
 # Returns the current keypress in a0
 read_key:
 	li t0, KEYHIT_ADDR	#Loads the address of the key register
@@ -149,7 +186,13 @@ initialize_grid:	# a0 = value to clear to, a1 = grid address, a2 = end of grid a
 	la t0, gridB
 	la t1, nextGrid
 	sw t0, 0(t1)
+# Draw blank grid
+	call draw_grid
 	j initialize_exit
+initialize_exit:
+	lw ra, 0(sp)
+	addi sp, sp, 16
+	ret
 # Loads the specified cell with either a 1 or 0
 load_cell:	# a0 = grid pointer, a1 = column, a2 = row, a3 = value (1 or 0)
 	mv t3, a0
@@ -166,10 +209,6 @@ clear_grid:
 	addi a1, a1, 1	# Next cell
 	j clear_grid
 clear_grid_return:
-	ret
-initialize_exit:
-	lw ra, 0(sp)
-	addi sp, sp, 16
 	ret
 # Counts Neighbors and returns # in a0 (Cells above, below, left, right, and diagonal)
 # count_neighbors(a0 = row, a1 = col)
@@ -489,7 +528,7 @@ step_and_draw:
 	addi sp, sp, -16
 	sw ra, 0(sp)
 
-	call update_generation # Calculate the next generation
+	call update_ge	neration # Calculate the next generation
 	call swap_buffers # Make the new generation current
 	call draw_grid # Draw the updated grid
 	call present_frame # Display the updated frame buffer
