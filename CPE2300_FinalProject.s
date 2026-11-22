@@ -2,6 +2,8 @@
 # by Will Bakey, Daiki Hew, and Logan Chook
 
 .data
+#-- Input Handling
+.equ KEYHIT_ADDR, 0x4000002C #Key buffer
 # -- VGA Display
 .equ FB,      0x20000000 #frame buffer
 .equ PAL,     0x21000000 #palette
@@ -26,12 +28,12 @@ nextGrid: .word 0     # pointer for gridB
 .globl main
 main:
 #Initialize the grids
-la t0, gridA
-la t1, currentGrid
-sw t0, 0(t1)
-la t0, gridB
-la t1, nextGrid
-sw t0, 0(t1)
+	la t0, gridA
+	la t1, currentGrid
+	sw t0, 0(t1)
+	la t0, gridB
+	la t1, nextGrid
+	sw t0, 0(t1)
 
 #Set up palette
 	li   t0, PAL
@@ -51,9 +53,15 @@ sw t0, 0(t1)
 
 	# Calculate, swap, draw, and show one generation
 	call step_and_draw
-    call step_and_draw
+	call step_and_draw
     
 	j exit
+
+# Returns the current keypress in a0
+read_key:
+	li t0, KEYHIT_ADDR	#Loads the address of the key register
+	lw a0 ,0(t0)		#Reads the value
+	ret
 
 # Sets up the grid to a predefined set of alive cells
 initialize_grid:	# a0 = value to clear to, a1 = grid address, a2 = end of grid address
@@ -70,22 +78,10 @@ initialize_grid:	# a0 = value to clear to, a1 = grid address, a2 = end of grid a
 	lw a1, 0(a1)
 	add a2, a1, t0	# gridB space
 	call clear_grid
-	la a0, currentGrid	# Pointer for current grid
-	lw a0, 0(a0)
-	li a1, 4		# Target column
-	li a2, 5		# Target row
-	li a3, 1		# Load cell with 1 (alive)
-	call load_cell
-	la a0, currentGrid	# Pointer for current grid
-	lw a0, 0(a0)
-	li a2, 6		# Target row
-	call load_cell
-	la a0, currentGrid	# Pointer for current grid
-	lw a0, 0(a0)
-	li a2, 7		# Target row
-	call load_cell
+# Restore the original buffer assignments
+	
 	j initialize_exit
-# Set up initial cells
+# Loads the specified cell with either a 1 or 0
 load_cell:	# a0 = grid pointer, a1 = column, a2 = row, a3 = value (1 or 0)
 	li t0, COLS
 	mul t1, a2, t0
