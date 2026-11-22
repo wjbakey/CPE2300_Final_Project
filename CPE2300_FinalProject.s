@@ -62,7 +62,71 @@ read_key:
 	li t0, KEYHIT_ADDR	#Loads the address of the key register
 	lw a0 ,0(t0)		#Reads the value
 	ret
-
+	
+#Loads a predefined pattern to the grid based on keypress
+load_pattern:	#a0 = pattern
+	addi sp, sp, -16
+	sw ra, 0(sp)
+	sw s0, 4(sp)
+	mv s0, a0	# Move a0 to be used throughout function
+	
+	call initialize_grid	#Clears the grids/restores original buffer assignments
+	
+	la a0, currentGrid
+	lw a0, 0(a0)	# Prepares currentGrid for writing
+	
+	#Load block pattern (2x2 block)
+	li t0, 1
+	bne s0, t0, block_skip	#If not block pattern num, skip block pattern
+	li a1, 6	# Column 6
+	li a2, 5	# Row 5
+	li a3, 1	# Load a 1
+	call load_cell
+	li a1, 7	# Column 7
+	call load_cell
+	li a2, 6	# Row 6
+	call load_cell
+	li a1, 6	# Column 6
+	call load_cell
+	j load_pattern_return
+	block_skip:
+	
+	#Load blinker pattern (3 vertical cells)
+	li t0, 2
+	bne s0, t0, blinker_skip	# If not blinker pattern num, skip blinker pattern
+	li a1, 7	# Column 7
+	li a2, 4	# Row 4
+	li a3, 1	# Load a 1
+	call load_cell
+	li a2, 5	# Row 5
+	call load_cell
+	li a2, 6	# Row 6
+	call load_cell
+	j load_pattern_return
+	blinker_skip:
+	
+	#Load glider pattern (a pattern that moves across the screen)
+	li t0, 3
+	bne s0, t0, load_pattern_return	# If not glider pattern num, skip glider pattern
+	li a1, 2	# Column 2
+	li a2, 1	# Row 1
+	li a3, 1	# Load a 1
+	call load_cell
+	li a2, 3	# Row 3
+	call load_cell
+	li a1, 1	# Column 1
+	call load_cell
+	li a1, 3	# Column 3
+	call load_cell
+	li a2, 2	# Row 2
+	call load_cell
+	j load_pattern_return
+	
+	load_pattern_return:
+	lw ra, 0(sp)
+	lw s0, 4(sp)
+	addi sp, sp, 16
+	ret
 # Sets up the grid to a predefined set of alive cells
 initialize_grid:	# a0 = value to clear to, a1 = grid address, a2 = end of grid address
 	addi sp, sp, -16
@@ -79,15 +143,21 @@ initialize_grid:	# a0 = value to clear to, a1 = grid address, a2 = end of grid a
 	add a2, a1, t0	# gridB space
 	call clear_grid
 # Restore the original buffer assignments
-	
+	la t0, gridA
+	la t1, currentGrid
+	sw t0, 0(t1)
+	la t0, gridB
+	la t1, nextGrid
+	sw t0, 0(t1)
 	j initialize_exit
 # Loads the specified cell with either a 1 or 0
 load_cell:	# a0 = grid pointer, a1 = column, a2 = row, a3 = value (1 or 0)
+	mv t3, a0
 	li t0, COLS
 	mul t1, a2, t0
 	add t1, t1, a1
-	add a0, t1, a0
-	sb a3, 0(a0)
+	add t3, t1, t3
+	sb a3, 0(t3)
 	ret
 # Clears the whole grid to 0's ("Dead" cells)
 clear_grid:
